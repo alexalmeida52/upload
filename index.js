@@ -1,14 +1,25 @@
 var express = require('express')
 var multer  = require('multer')
-var upload = multer({ dest: 'uploads/' })
+const excelToJson = require('convert-excel-to-json');
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null,  'public/uploads')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now())
+  }
+})
 
+var upload = multer({ storage: storage })
 var app = express()
-app.use(express.static('public'))
-app.post('/profile', upload.single('avatar'), function (req, res, next) {
+
+app.post('/profile', upload.single('pdf'), function (req, res, next) {
   // req.file is the `avatar` file
   // req.body will hold the text fields, if there were any
-  console.log(req.file);
-  res.send("Oi");
+  const result = excelToJson({
+      sourceFile: req.file.path
+  });
+  res.json(result);
 })
 
 app.post('/photos/upload', upload.array('photos', 12), function (req, res, next) {
@@ -27,4 +38,4 @@ app.post('/cool-profile', cpUpload, function (req, res, next) {
   // req.body will contain the text fields, if there were any
 })
 
-app.listen(5000);
+app.listen(5000, () => console.log("Server running..."));
