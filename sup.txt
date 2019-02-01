@@ -1,0 +1,32 @@
+var express = require('express')
+var multer  = require('multer')
+const excelToJson = require('convert-excel-to-json');
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/uploads')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now())
+  }
+})
+
+var upload = multer({ storage: storage })
+
+
+module.exports = (app) => {
+    
+    app.post('/profile', upload.single('avatar'), function (req, res, next) {
+        
+        // req.file is the `avatar` file
+        // req.body will hold the text fields, if there were any
+        const result = excelToJson({
+            sourceFile: req.file.path
+        });
+        return result;
+    });
+
+   
+
+    
+};
+
