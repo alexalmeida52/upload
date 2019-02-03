@@ -1,7 +1,8 @@
 var express = require('express')
 var multer  = require('multer')
 const excelToJson = require('convert-excel-to-json');
-var storage = multer.diskStorage({
+const fs = require('fs');
+var storage = multer.diskStorage({  
   destination: function (req, file, cb) {
     cb(null, 'public/uploads')
   },
@@ -14,19 +15,68 @@ var upload = multer({ storage: storage })
 
 
 module.exports = (app) => {
-    
-    app.post('/profile', upload.single('avatar'), function (req, res, next) {
-        
-        // req.file is the `avatar` file
-        // req.body will hold the text fields, if there were any
-        const result = excelToJson({
-            sourceFile: req.file.path
-        });
-        return result;
+     
+    app.post('/medicos/agendas/', upload.single('excelUp'), function (req, res, next) {
+      var result; 
+      // req.file is the `avatar` file
+      // req.body will hold the text fields, if there were any
+      result = excelToJson({
+          sourceFile: req.file.path,
+          columnToKey: {
+            A: 'nome',
+            B: 'telefone'
+        }
+      }); 
+      
+      var usuJSON = JSON.stringify(result);
+      fs.writeFile('./public/uploads/mensage.json', usuJSON, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+      });
+      console.log('POST:', result);
+      
+      // $window.localStorage.setItem('usuario',  JSON.stringify(usuario));  
+      res.send('O upload foi entuado com sucesso. Feche está página, volte para onde estava e clique em importar para anexar os dados a tabela.');
     });
-
-   
-
-    
 };
 
+
+
+
+
+
+
+
+$scope.upload = function(){
+    $http.get('/uploads/mensage.json').success(function(data, status, headers, config) {
+      $scope.usuario = data.dados;
+      
+      for(dados in $scope.usuario){
+        $scope.adicionarPaciente($scope.usuario[dados]);
+      }
+    }).error(function(data, status, headers, config) {
+      console.log('Erro.');
+    });
+  }
+
+
+
+
+
+//edit
+<button class="btn " ng-click='upload()'>Importar</button>
+          <a style="text-decoration: none;" class="btn" href="/#/upload" target="_blank">  Fazer upload de arquivo </a>
+//new view
+<form  enctype="multipart/form-data"  action="/medicos/agendas" method="post">
+      <input class="upload-field" type="file" name="excelUp" accept=".xlsx,.xls"/>
+      <button>Enviar</button>
+</form>
+
+//app
+.when("/upload", {
+      templateUrl : "views/upload/upload.html",
+      controller: 'MedicoEditarAgendaController'
+    })
+
+
+    criar diretorio public/uploads/mensage.json
